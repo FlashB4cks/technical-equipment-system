@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Area {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  technicians Technician[]
+  equipment   Equipment[]
+}
+
+model Technician {
+  id        Int      @id @default(autoincrement())
+  name      String
+  areaId    Int?
+  area      Area?    @relation(fields: [areaId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignedEquipment Equipment[] 
+  maintenances      Maintenance[]
+}
+
+model Equipment {
+  id           Int      @id @default(autoincrement())
+  type         String   
+  model        String
+  serialNumber String   @unique
+  status       String   @default("Pending") // Pending (En espera), Diagnosing, Maintenance, Ready, Delivered
+  reportedFailure String? 
+  
+  areaId       Int?
+  area         Area?    @relation(fields: [areaId], references: [id])
+  
+  technicianId Int?
+  technician   Technician? @relation(fields: [technicianId], references: [id])
+
+  nextMaintenanceDate DateTime?
+  
+  entryDate    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  maintenances Maintenance[]
+}
+
+model Maintenance {
+  id           Int      @id @default(autoincrement())
+  diagnosis    String
+  resolution   String?
+  observations String?
+  status       String   @default("Scheduled") // Scheduled, In Progress, Completed
+  date         DateTime @default(now())
+  cost         Float?
+
+  equipmentId  Int
+  equipment    Equipment @relation(fields: [equipmentId], references: [id])
+
+  technicianId Int?
+  technician   Technician? @relation(fields: [technicianId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
