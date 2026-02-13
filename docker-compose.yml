@@ -5,9 +5,9 @@ services:
     build: .
     restart: always
     ports:
-      - "3000:3000"
+      - "80:3000"
     environment:
-      - DATABASE_URL=postgresql://flashback:${DB_PASSWORD}@db:5432/technical_equipment
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
     depends_on:
@@ -17,13 +17,33 @@ services:
     image: postgres:14-alpine
     restart: always
     environment:
-      - POSTGRES_USER=flashback
+      - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=technical_equipment
+      - POSTGRES_DB=${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  setup:
+    build: .
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 5 &&
+        npx prisma db push &&
+        node reset-admin.js
+      "
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - setup
 
 volumes:
   postgres_data:
