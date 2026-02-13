@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url = env("DATABASE_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
 model Area {
@@ -16,20 +17,33 @@ model Area {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  technicians Technician[]
+  gerenciaId Int?
+  gerencia   Gerencia? @relation(fields: [gerenciaId], references: [id])
+
+
   equipment   Equipment[]
+}
+
+model Gerencia {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  areas     Area[]
 }
 
 model Technician {
   id        Int      @id @default(autoincrement())
   name      String
-  areaId    Int?
-  area      Area?    @relation(fields: [areaId], references: [id])
+  // areaId removed as requested
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   assignedEquipment Equipment[] 
   maintenances      Maintenance[]
+
+  userId    Int?     @unique
+  user      User?    @relation(fields: [userId], references: [id])
 }
 
 model Equipment {
@@ -40,6 +54,11 @@ model Equipment {
   status       String   @default("Pending") // Pending (En espera), Diagnosing, Maintenance, Ready, Delivered
   reportedFailure String? 
   
+  diagnosisFinishedAt DateTime?
+  reportedBy          String?
+  personInCharge      String?
+  addedBy             String?
+
   areaId       Int?
   area         Area?    @relation(fields: [areaId], references: [id])
   
@@ -52,6 +71,7 @@ model Equipment {
   updatedAt    DateTime @updatedAt
 
   maintenances Maintenance[]
+  logs         EquipmentLog[]
 }
 
 model Maintenance {
@@ -71,4 +91,58 @@ model Maintenance {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model EquipmentLog {
+  id          Int      @id @default(autoincrement())
+  equipmentId Int
+  action      String   // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGE"
+  details     String
+  timestamp   DateTime @default(now())
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  userName    String?
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("USER") // ADMIN, TECH
+  createdAt DateTime @default(now())
+  
+  technician Technician?
+}
+
+model WarehouseItem {
+  id          Int      @id @default(autoincrement())
+  name        String
+  category    String   // e.g., "Consumibles", "Repuestos", "Herramientas"
+  quantity    Int      @default(0)
+  minQuantity Int      @default(5) // Alert threshold
+  unit        String   @default("unidades")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  movements   WarehouseMovement[]
+}
+
+model WarehouseMovement {
+  id              Int      @id @default(autoincrement())
+  type            String   // "IN", "OUT", "ADJUSTMENT"
+  quantity        Int
+  reason          String?
+  
+  // New Tracking Fields
+  referenceDocument String? // Constancia de Salida (IN) or Oficio (OUT)
+  gerencia          String? // For OUT
+  subArea           String? // For OUT
+  receiver          String? // Person receiving
+  
+  warehouseItemId Int
+  warehouseItem   WarehouseItem @relation(fields: [warehouseItemId], references: [id], onDelete: Cascade)
+  
+  userId          String?
+  date            DateTime @default(now())
 }

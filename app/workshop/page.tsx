@@ -12,6 +12,14 @@ export default function WorkshopPage() {
     const [diagnosis, setDiagnosis] = useState('');
     const [resolution, setResolution] = useState('');
     const [techId, setTechId] = useState('');
+    const [changeTech, setChangeTech] = useState(false);
+
+    useEffect(() => {
+        if (selectedEq) {
+            setTechId(selectedEq.technicianId ? selectedEq.technicianId.toString() : '');
+            setChangeTech(false);
+        }
+    }, [selectedEq]);
 
     useEffect(() => {
         fetchEquipment();
@@ -112,7 +120,7 @@ export default function WorkshopPage() {
                                             <FileText size={12} />
                                             Falla Reportada por Usuario:
                                         </p>
-                                        <p className="text-sm text-gray-300 italic">"{selectedEq.reportedFailure}"</p>
+                                        <p className="text-sm text-gray-300 italic">&quot;{selectedEq.reportedFailure}&quot;</p>
                                     </div>
                                 )}
 
@@ -143,18 +151,49 @@ export default function WorkshopPage() {
                                         </div>
                                     )}
 
+                                    {/* Technician Selection Logic */}
                                     <div>
                                         <label className="block text-sm text-gray-400 mb-1">Técnico Responsable</label>
-                                        <select
-                                            className="input-field text-white/90"
-                                            value={techId}
-                                            onChange={e => setTechId(e.target.value)}
-                                        >
-                                            <option value="" className="text-black">Seleccionar...</option>
-                                            {technicians.map(t => (
-                                                <option key={t.id} value={t.id} className="text-black">{t.name}</option>
-                                            ))}
-                                        </select>
+
+                                        {!changeTech && techId ? (
+                                            <div className="flex items-center justify-between bg-white/5 p-3 rounded-lg border border-white/10">
+                                                <div className="flex items-center gap-2">
+                                                    <CheckCircle size={16} className="text-green-400" />
+                                                    <span className="text-white font-medium">
+                                                        {technicians.find(t => t.id.toString() === techId.toString())?.name || 'Técnico'}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setChangeTech(true)}
+                                                    className="text-xs text-blue-400 hover:text-blue-300 underline"
+                                                >
+                                                    Cambiar
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                <select
+                                                    className="input-field text-white/90"
+                                                    value={techId}
+                                                    onChange={e => setTechId(e.target.value)}
+                                                >
+                                                    <option value="" className="text-black">Seleccionar...</option>
+                                                    {technicians.map(t => (
+                                                        <option key={t.id} value={t.id} className="text-black">{t.name}</option>
+                                                    ))}
+                                                </select>
+                                                {techId && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setChangeTech(false)}
+                                                        className="text-xs text-gray-400 hover:text-white"
+                                                    >
+                                                        Cancelar cambio
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <button type="submit" className={`w-full py-2 rounded-lg font-bold transition-all ${selectedEq.status === 'Maintenance'

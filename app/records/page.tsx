@@ -51,20 +51,20 @@ export default function RecordsPage() {
             </h1>
 
             <div className="glass-card p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="md:col-span-2 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <div className="md:col-span-2 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 flex items-center gap-3 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                    <Search className="text-gray-400" size={18} />
                     <input
-                        className="input-field pl-10"
+                        className="bg-transparent border-none outline-none text-white w-full placeholder-gray-400"
                         placeholder="Buscar por modelo, serie..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                     />
                 </div>
 
-                <div className="relative">
-                    <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <div className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 flex items-center gap-3 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                    <Filter className="text-gray-400" size={18} />
                     <select
-                        className="input-field pl-10 appearance-none"
+                        className="bg-transparent border-none outline-none text-white w-full appearance-none"
                         value={statusFilter}
                         onChange={e => setStatusFilter(e.target.value)}
                     >
